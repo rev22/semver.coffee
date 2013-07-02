@@ -19,8 +19,8 @@ y = "1.0.1"
   same: -> console.log "#{x} = #{y}"
   more: -> console.log "#{x} > #{y}"
 
-Version.increment "1.2.3"       # -> "1.2.4"
-Version.incrementMinor "1.2.3"  # -> "1.3.0"
-Version.incrementMayor "1.2.3"  # -> "2.0.0"
+Version.increment       "1.2.3"  # -> "1.2.4"
+Version.incrementMinor  "1.2.3"  # -> "1.3.0"
+Version.incrementMayor  "1.2.3"  # -> "2.0.0"
 
 ````
