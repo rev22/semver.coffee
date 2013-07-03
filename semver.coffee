@@ -14,9 +14,32 @@
 
 # Semantic Versioning v2.0.0 library (per semver.org)
 
-# Subset of the library that only supports normal versions, without build or prerelease parts
+# Tiny object system
 
-{ Reflective: {library} } = require "reflective"
+object =
+  extend: (fields) ->
+    o = (fields) -> arguments.callee.extend fields
+    o[n] = v for n,v of this
+    o[n] = v for n,v of fields
+    o
+
+library = object.extend
+  exportables: {}
+  withExports: (l) ->
+    x = @exportables
+    x[n] = 1 for n in l
+    x
+  getExports: () ->
+    exports = {}
+    adapt = (m, l) ->
+      # adapt a library method into a public function
+      () -> m.apply l, arguments
+    for f of @exportables
+      exports[f] = adapt @[f], @
+    exports
+
+# Subset of the library that only supports normal versions, without
+# build or prerelease parts 
 
 NormalVersion = library
   intcmp: (a,b) -> (d) ->
