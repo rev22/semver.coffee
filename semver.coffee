@@ -63,9 +63,9 @@ NormalVersion = library
   toString: (v) -> "#{v.major}.#{v.minor}.#{v.patch}"
   
   exportables:
-    library.withExports "cmp,increment,incrementMinor,incrementMajor,isCompatibleWith".split(",")
+    library.withExports "compare,increment,incrementMinor,incrementMajor,isCompatibleWith".split(",")
 
-  cmp: (a,b) -> (d) =>
+  compare: (a,b) -> (d) =>
     a = @fromString a
     b = @fromString b
     (@intcmp a.major,b.major)
@@ -142,7 +142,7 @@ Version = NormalVersion
 
   exports: NormalVersion.withExports "isNormal,normalize".split(",")
 
-  cmp: (a,b) -> (d) =>
+  compare: (a,b) -> (d) =>
     a = @fromString a
     b = @fromString b
     (NormalVersion.cmp a,b)
