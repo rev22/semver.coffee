@@ -1,6 +1,6 @@
 # semver.coffee - Library for Semantic Versioning
 
-# Version: 1.0.0-alpha
+# Version: 1.0.0-beta
   
 # Copyright (c) 2013 Michele Bini
 
@@ -47,6 +47,17 @@ library = object.extend
 
 NormalVersion = library
   intcmp: (a,b) -> (d) ->
+    a = a|0
+    b = b|0
+    if a < b
+      do d.less
+    else if b < a
+      do d.more
+    else
+      do d.same
+  asciicmp: (a,b) -> (d) ->
+    a = "#{a}"
+    b = "#{b}"
     if a < b
       do d.less
     else if b < a
@@ -146,10 +157,48 @@ Version = NormalVersion
 
   exports: NormalVersion.withExports "isNormal,normalize".split(",")
 
+  comparePreId: (a,b) -> (d) =>
+    n = /^[0-9]*$/
+    an = n.test(a)
+    bn = n.test(b)
+    if an
+      if bn
+        (@intcmp a,b) d
+      else
+        do d.less
+    else
+      if bn
+        do d.more
+      else
+        (@asciicmp a,b) d        
+
+  comparePre: (a,b) -> (d) =>
+    i = 0
+    done = false
+    result = null
+    while (ai = a[i])? and (bi = b[i])?
+      (@comparePreId ai, bi)
+        less: -> result = do d.less; done = true
+        more: -> result = do d.more; done = true
+        same: ->
+      return result if done
+      i++
+    bi = b[i] # This may seem redundant, but it's actually necessary
+    if ai?
+      if bi?
+        (@comparePreId ai, bi) d
+      else
+        do d.more
+    else
+      if bi?
+        do d.less
+      else
+        do d.same 
+
   compare: (a,b) -> (d) =>
     a = @fromString a
     b = @fromString b
-    (NormalVersion.cmp a,b)
+    (@NormalVersion.compare a,b)
       less: -> do d.less
       more: -> do d.more
       same: =>
@@ -157,8 +206,7 @@ Version = NormalVersion
         b = b.pre
         if a
           if b
-            i = 0
-            (prereleaseCmp a, b) d
+            (@comparePre a, b) d
           else
             do d.less
         else

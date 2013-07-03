@@ -1,9 +1,7 @@
 semver.coffee
 =============
 
-[Coffeescript](http://coffeescript.org) Library for [Semantic Versioning](http://semver.org)
-
-This is an initial, incomplete release of the source code.
+A [Coffeescript](http://coffeescript.org) library for [Semantic Versioning](http://semver.org)
 
 Created according to [Semantic Versioning v2.0.0](http://semver.org/spec/v2.0.0.html)
 
