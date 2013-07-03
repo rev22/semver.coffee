@@ -1,6 +1,6 @@
 # semver.coffee - Library for Semantic Versioning
 
-# Version: 1.0.0-beta
+# Version: 1.0.0
   
 # Copyright (c) 2013 Michele Bini
 
@@ -20,16 +20,15 @@
 
 # Tiny object system
 
-object =
-  extend: (fields) ->
-    o = (fields) -> arguments.callee.extend fields
-    o[n] = v for n,v of this
-    o[n] = v for n,v of fields
-    o
+object = (fields) ->
+  o = (fields) -> arguments.callee.extend fields
+  o[n] = v for n,v of this
+  o[n] = v for n,v of fields
+  o
 
-library = object.extend
-  baseExtend: object.extend
-  exports: object.extend
+library = (object.extend = object)
+  baseExtend: object
+  exports: object
   extend: (fields) ->
     o = @baseExtend fields
     o = o.baseExtend (p = o.public)
@@ -39,7 +38,9 @@ library = object.extend
     o.baseExtend { exports }
 
 # Subset of the library that only supports normal versions, without
-# build or prerelease parts 
+# build or prerelease parts
+
+doc = (doc, f) -> f.doc = doc; f
 
 NormalVersion = library
   intcmp: (a,b) -> (d) ->
@@ -74,7 +75,7 @@ NormalVersion = library
   toString: (v) -> "#{v.major}.#{v.minor}.#{v.patch}"
   
   public:
-    compare: (a,b) -> (d) =>
+    compare: doc "Compare versions A and B, then execute D.{less|same|more}", (a,b) -> (d) =>
       a = @fromString a
       b = @fromString b
       (@intcmp a.major,b.major)
@@ -90,32 +91,33 @@ NormalVersion = library
                 more: -> do d.more
                 same: -> do d.same
 
-    increment:       (v) ->
+    increment: doc "Increment version patch number", (v) ->
       { major, minor, patch } = @fromString v
       @toString { major, minor, patch: patch + 1 }
-    incrementMinor:  (v) ->
+    incrementMinor: doc "Increment minor version", (v) ->
       { major, minor } = @fromString v
       @toString { major, minor: minor + 1, patch: 0 }
-    incrementMajor:  (v) ->
+    incrementMajor: doc "Increment major version", (v) ->
       { major } = @fromString v
       @toString { major: major + 1, minor: 0, patch: 0 }
 
-  # Evaluates the mutual compatibility of versions x and y
-  # less: y's api extends x's api in a backward-compatible fashion
-  # same: x and y have the same api and are mutually compatible
-  # more: x's api extends y's api in a backward-compatible fashion
-  # incompatible: x and y are mutually incompatible
-  # This function assumes that both major versions are > 0
-  compatibility: (x,y) ->
-    a = @fromString a; b = @fromString b
-    (@intcmp a.major,b.major)
-      less: -> do d.incompatible
-      more: -> do d.incompatible
-      same: =>
-        (@intcmp a.minor,b.minor)
-          less: -> do d.less
-          more: -> do d.more
-          same: -> do d.same
+    compatibility: doc """
+      Evaluates the mutual compatibility of versions X and Y
+      less: y's api extends x's api in a backward-compatible fashion
+      same: x and y have the same api and are mutually compatible
+      more: x's api extends y's api in a backward-compatible fashion
+      incompatible: x and y are mutually incompatible
+      This function assumes that both major versions are > 0
+      """, (x,y) ->
+      a = @fromString a; b = @fromString b
+      (@intcmp a.major,b.major)
+        less: -> do d.incompatible
+        more: -> do d.incompatible
+        same: =>
+          (@intcmp a.minor,b.minor)
+            less: -> do d.less
+            more: -> do d.more
+            same: -> do d.same
 
 # Extend library to complete support of Semantic Versioning v2.0.0
 Version = NormalVersion
@@ -145,8 +147,8 @@ Version = NormalVersion
 
   toString: (v) ->
     s = NormalVersion.toString v
-    s += "-" + v.pre.join    "." if v.pre
-    s += "+" + v.build.join  "." if v.build
+    s += "-" + (v.pre.join    ".") if v.pre
+    s += "+" + (v.build.join  ".") if v.build
     s
 
   comparePreId: (a,b) -> (d) =>
@@ -188,7 +190,7 @@ Version = NormalVersion
         do d.same 
 
   public:
-    compare: (a,b) -> (d) =>
+    compare: doc "Compare versions A and B, then execute D.{less|same|more}", (a,b) -> (d) =>
       a = @fromString a
       b = @fromString b
       (@NormalVersion.compare a,b)
@@ -207,11 +209,24 @@ Version = NormalVersion
               do d.more
             else
               do d.same
-    isNormal:   (v) ->
+    isNormal: doc "Return true if V is a normal version, in X.Y.Z form", (v) ->
       v = @fromString v
       !(v.pre or v.build)
-    normalize:  (v) ->
+    normalize: doc "Return the normal X.Y.Z version corresponding to V", (v) ->
       { major, minor, patch } = @fromString v
       @NormalVersion.toString { major, minor, patch }
+    incrementPre: doc "Increment prerelease number of version V", (v) ->
+      v = @fromString v
+      pre = v.pre
+      if pre
+        c = pre[pre.length - 1]
+        if /^(0|[1-9][0-9]*)$/.test(c)
+          pre[pre.length - 1] = (c|0)+1
+          v.pre = pre
+        else
+          v.pre = pre.concat([1])
+      else
+        v.pre = [ 1 ]
+      @toString v
 
 exports.Version = Version.exports

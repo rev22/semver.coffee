@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 
-{Version} = require "semver"
+{Version} = require "./semver"
 
 testComparisson = (x, y) -> (Version.compare x, y)
   less: -> console.log "#{x} < #{y}"
@@ -33,3 +33,8 @@ console.log Version.incrementMinor  "1.2.3+build"  # -> "2.0.0"
 console.log Version.incrementMinor  "1.2.3-foo+build"  # -> "2.0.0"
 console.log Version.incrementMajor  "1.2.3+build"  # -> "2.0.0"
 console.log Version.incrementMajor  "1.2.3-foo+build"  # -> "2.0.0"
+
+console.log Version.incrementPre       "1.2.3"  # -> "1.2.4"
+console.log Version.incrementPre       "1.2.3-1"  # -> "1.2.4"
+console.log Version.incrementPre       "1.2.3-foo"  # -> "1.2.4"
+console.log Version.incrementPre       "1.2.3-foo.1"  # -> "1.2.4"
