@@ -1,0 +1,17 @@
+#!/usr/bin/env coffee
+
+{Version} = require "semver"
+
+testComparisson = (x, y) -> (Version.cmp x, y)
+  less: -> console.log "#{x} < #{y}"
+  same: -> console.log "#{x} = #{y}"
+  more: -> console.log "#{x} > #{y}"
+
+testComparisson "1.0.0", "1.0.1"
+testComparisson "1.3.1", "1.3.1"
+testComparisson "1.5.0", "1.5.0-foo"
+testComparisson "2.3.1", "2.3.1+foo"
+
+console.log Version.increment       "1.2.3"  # -> "1.2.4"
+console.log Version.incrementMinor  "1.2.3"  # -> "1.3.0"
+console.log Version.incrementMajor  "1.2.3"  # -> "2.0.0"

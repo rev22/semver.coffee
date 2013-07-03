@@ -21,6 +21,6 @@ y = "1.0.1"
 
 Version.increment       "1.2.3"  # -> "1.2.4"
 Version.incrementMinor  "1.2.3"  # -> "1.3.0"
-Version.incrementMayor  "1.2.3"  # -> "2.0.0"
+Version.incrementMajor  "1.2.3"  # -> "2.0.0"
 
 ````
