@@ -1,3 +1,7 @@
+# semver.coffee - Library for Semantic Versioning
+
+# Version: 1.0.0-alpha
+  
 # Copyright (c) 2013 Michele Bini
 
 # This program is free software: you can redistribute it and/or modify

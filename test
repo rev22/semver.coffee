@@ -2,7 +2,7 @@
 
 {Version} = require "semver"
 
-testComparisson = (x, y) -> (Version.cmp x, y)
+testComparisson = (x, y) -> (Version.compare x, y)
   less: -> console.log "#{x} < #{y}"
   same: -> console.log "#{x} = #{y}"
   more: -> console.log "#{x} > #{y}"
