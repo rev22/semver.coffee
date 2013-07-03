@@ -28,19 +28,15 @@ object =
     o
 
 library = object.extend
-  exportables: {}
-  withExports: (l) ->
-    x = @exportables
-    x[n] = 1 for n in l
-    x
-  getExports: () ->
-    exports = {}
-    adapt = (m, l) ->
-      # adapt a library method into a public function
-      () -> m.apply l, arguments
-    for f of @exportables
-      exports[f] = adapt @[f], @
-    exports
+  baseExtend: object.extend
+  exports: object.extend
+  extend: (fields) ->
+    o = @baseExtend fields
+    o = o.baseExtend (p = o.public)
+    exports = o.exports p
+    adapt = (m, l) -> () -> m.apply l, arguments
+    exports[n] = adapt o[n], o for n of exports
+    o.baseExtend { exports }
 
 # Subset of the library that only supports normal versions, without
 # build or prerelease parts 
@@ -77,34 +73,32 @@ NormalVersion = library
 
   toString: (v) -> "#{v.major}.#{v.minor}.#{v.patch}"
   
-  exportables:
-    library.withExports "compare,increment,incrementMinor,incrementMajor,isCompatibleWith".split(",")
+  public:
+    compare: (a,b) -> (d) =>
+      a = @fromString a
+      b = @fromString b
+      (@intcmp a.major,b.major)
+        less: -> do d.less
+        more: -> do d.more
+        same: =>
+          (@intcmp a.minor,b.minor)
+            less: -> do d.less
+            more: -> do d.more
+            same: =>
+              (@intcmp a.patch,b.patch)
+                less: -> do d.less
+                more: -> do d.more
+                same: -> do d.same
 
-  compare: (a,b) -> (d) =>
-    a = @fromString a
-    b = @fromString b
-    (@intcmp a.major,b.major)
-      less: -> do d.less
-      more: -> do d.more
-      same: =>
-        (@intcmp a.minor,b.minor)
-          less: -> do d.less
-          more: -> do d.more
-          same: =>
-            (@intcmp a.patch,b.patch)
-              less: -> do d.less
-              more: -> do d.more
-              same: -> do d.same
-
-  increment:       (v) ->
-    { major, minor, patch } = @fromString v
-    @toString { major, minor, patch: patch + 1 }
-  incrementMinor:  (v) ->
-    { major, minor } = @fromString v
-    @toString { major, minor: minor + 1, patch: 0 }
-  incrementMajor:  (v) ->
-    { major } = @fromString v
-    @toString { major: major + 1, minor: 0, patch: 0 }
+    increment:       (v) ->
+      { major, minor, patch } = @fromString v
+      @toString { major, minor, patch: patch + 1 }
+    incrementMinor:  (v) ->
+      { major, minor } = @fromString v
+      @toString { major, minor: minor + 1, patch: 0 }
+    incrementMajor:  (v) ->
+      { major } = @fromString v
+      @toString { major: major + 1, minor: 0, patch: 0 }
 
   # Evaluates the mutual compatibility of versions x and y
   # less: y's api extends x's api in a backward-compatible fashion
@@ -155,8 +149,6 @@ Version = NormalVersion
     s += "+" + v.build.join  "." if v.build
     s
 
-  exports: NormalVersion.withExports "isNormal,normalize".split(",")
-
   comparePreId: (a,b) -> (d) =>
     n = /^[0-9]*$/
     an = n.test(a)
@@ -195,32 +187,31 @@ Version = NormalVersion
       else
         do d.same 
 
-  compare: (a,b) -> (d) =>
-    a = @fromString a
-    b = @fromString b
-    (@NormalVersion.compare a,b)
-      less: -> do d.less
-      more: -> do d.more
-      same: =>
-        a = a.pre
-        b = b.pre
-        if a
-          if b
-            (@comparePre a, b) d
+  public:
+    compare: (a,b) -> (d) =>
+      a = @fromString a
+      b = @fromString b
+      (@NormalVersion.compare a,b)
+        less: -> do d.less
+        more: -> do d.more
+        same: =>
+          a = a.pre
+          b = b.pre
+          if a
+            if b
+              (@comparePre a, b) d
+            else
+              do d.less
           else
-            do d.less
-        else
-          if b
-            do d.more
-          else
-            do d.same
+            if b
+              do d.more
+            else
+              do d.same
+    isNormal:   (v) ->
+      v = @fromString v
+      !(v.pre or v.build)
+    normalize:  (v) ->
+      { major, minor, patch } = @fromString v
+      @NormalVersion.toString { major, minor, patch }
 
-  isNormal:   (v) ->
-    v = @fromString v
-    !(v.pre or v.build)
-  normalize:  (v) ->
-    { major, minor, patch } = @fromString v
-    @NormalVersion.toString { major, minor, patch }
-
-
-exports.Version = Version.getExports()
+exports.Version = Version.exports
