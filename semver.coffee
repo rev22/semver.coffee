@@ -1,6 +1,6 @@
 # semver.coffee - Library for Semantic Versioning
 
-# Version: 1.0.0
+# Version: 1.0.1
   
 # Copyright (c) 2013 Michele Bini
 
@@ -102,19 +102,20 @@ NormalVersion = library
       @toString { major: major + 1, minor: 0, patch: 0 }
 
     compatibility: doc """
-      Evaluates the mutual compatibility of versions X and Y
+      Evaluate the mutual compatibility of versions X and Y then
+      execute D.{less|same|more|incompatible}, according to:
       less: y's api extends x's api in a backward-compatible fashion
       same: x and y have the same api and are mutually compatible
       more: x's api extends y's api in a backward-compatible fashion
       incompatible: x and y are mutually incompatible
       This function assumes that both major versions are > 0
-      """, (x,y) ->
+      """, (a,b) -> (d) =>
       a = @fromString a; b = @fromString b
-      (@intcmp a.major,b.major)
+      (@intcmp a.major, b.major)
         less: -> do d.incompatible
         more: -> do d.incompatible
         same: =>
-          (@intcmp a.minor,b.minor)
+          (@intcmp a.minor, b.minor)
             less: -> do d.less
             more: -> do d.more
             same: -> do d.same
@@ -215,7 +216,7 @@ Version = NormalVersion
     normalize: doc "Return the normal X.Y.Z version corresponding to V", (v) ->
       { major, minor, patch } = @fromString v
       @NormalVersion.toString { major, minor, patch }
-    incrementPre: doc "Increment prerelease number of version V", (v) ->
+    incrementPre: doc "Increment prerelease of version V", (v) ->
       v = @fromString v
       pre = v.pre
       if pre

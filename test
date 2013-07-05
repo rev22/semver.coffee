@@ -2,39 +2,68 @@
 
 {Version} = require "./semver"
 
-testComparisson = (x, y) -> (Version.compare x, y)
-  less: -> console.log "#{x} < #{y}"
-  same: -> console.log "#{x} = #{y}"
-  more: -> console.log "#{x} > #{y}"
+passed = 0
 
-testComparisson "1.0.0", "1.0.1"
-testComparisson "1.3.1", "1.3.1"
-testComparisson "1.5.0", "1.5.0-foo"
-testComparisson "1.5.0-alpha", "1.5.0-1"
-testComparisson "1.5.0-alpha", "1.5.0-alpha"
-testComparisson "1.5.0-alpha", "1.5.0-beta"
-testComparisson "1.5.0-beta", "1.5.0-alpha"
-testComparisson "1.5.0-alpha", "1.5.0-alpha.1"
-testComparisson "1.5.0-alpha.1", "1.5.0-alpha.1"
-testComparisson "1.5.0-alpha.1", "1.5.0-alpha.1.2"
-testComparisson "1.5.0-alpha.1.3", "1.5.0-alpha.1.2"
-testComparisson "2.3.1", "2.3.1+foo"
-testComparisson "2.3.1-beta", "2.3.1-beta+foo"
-testComparisson "2.3.1-beta", "2.3.1-beta.1+foo"
-testComparisson "2.3.1-beta.3", "2.3.1-beta.1+foo"
+fail = (message) ->
+  console.log message
+  process.exit 1
 
-console.log Version.increment       "1.2.3"  # -> "1.2.4"
-console.log Version.incrementMinor  "1.2.3"  # -> "1.3.0"
-console.log Version.incrementMajor  "1.2.3"  # -> "2.0.0"
-console.log Version.incrementMajor  "1.2.3-foo"  # -> "2.0.0"
-console.log Version.increment       "1.2.3+build"  # -> "2.0.0"
-console.log Version.increment       "1.2.3-foo+build"  # -> "2.0.0"
-console.log Version.incrementMinor  "1.2.3+build"  # -> "2.0.0"
-console.log Version.incrementMinor  "1.2.3-foo+build"  # -> "2.0.0"
-console.log Version.incrementMajor  "1.2.3+build"  # -> "2.0.0"
-console.log Version.incrementMajor  "1.2.3-foo+build"  # -> "2.0.0"
+test = (expected, thunk) ->
+  if expected is (returned = do thunk)
+    passed++
+  else
+    fail "Test failed: expected #{expected}, returned:#{returned}: #{thunk}"
 
-console.log Version.incrementPre       "1.2.3"  # -> "1.2.4"
-console.log Version.incrementPre       "1.2.3-1"  # -> "1.2.4"
-console.log Version.incrementPre       "1.2.3-foo"  # -> "1.2.4"
-console.log Version.incrementPre       "1.2.3-foo.1"  # -> "1.2.4"
+cmp = (x, y) -> (Version.compare x, y)
+  less: -> "<"
+  same: -> "="
+  more: -> ">"
+
+test "<", -> cmp "1.0.0",            "1.0.1"
+test "=", -> cmp "1.3.1",            "1.3.1"
+test ">", -> cmp "1.5.0",            "1.5.0-foo"
+test ">", -> cmp "1.5.0-alpha",      "1.5.0-1"
+test "=", -> cmp "1.5.0-alpha",      "1.5.0-alpha"
+test "<", -> cmp "1.5.0-alpha",      "1.5.0-beta"
+test ">", -> cmp "1.5.0-beta",       "1.5.0-alpha"
+test "<", -> cmp "1.5.0-alpha",      "1.5.0-alpha.1"
+test "=", -> cmp "1.5.0-alpha.1",    "1.5.0-alpha.1"
+test "<", -> cmp "1.5.0-alpha.1",    "1.5.0-alpha.1.2"
+test ">", -> cmp "1.5.0-alpha.1.3",  "1.5.0-alpha.1.2"
+test "=", -> cmp "2.3.1",            "2.3.1+foo"
+test "=", -> cmp "2.3.1-beta",       "2.3.1-beta+foo"
+test "<", -> cmp "2.3.1-beta",       "2.3.1-beta.1+foo"
+test ">", -> cmp "2.3.1-beta.3",     "2.3.1-beta.1+foo"
+
+test "1.2.4", -> Version.increment       "1.2.3"
+test "1.3.0", -> Version.incrementMinor  "1.2.3"
+test "2.0.0", -> Version.incrementMajor  "1.2.3"
+test "2.0.0", -> Version.incrementMajor  "1.2.3-foo"
+test "1.2.4", -> Version.increment       "1.2.3+build"
+test "1.2.4", -> Version.increment       "1.2.3-foo+build"
+test "1.3.0", -> Version.incrementMinor  "1.2.3+build"
+test "1.3.0", -> Version.incrementMinor  "1.2.3-foo+build"
+test "2.0.0", -> Version.incrementMajor  "1.2.3+build"
+test "2.0.0", -> Version.incrementMajor  "1.2.3-foo+build"
+
+test "1.2.3-1",      -> Version.incrementPre "1.2.3"
+test "1.2.3-2",      -> Version.incrementPre "1.2.3-1"
+test "1.2.3-foo.1",  -> Version.incrementPre "1.2.3-foo"
+test "1.2.3-foo.2",  -> Version.incrementPre "1.2.3-foo.1"
+
+compat = (x, y) -> (Version.compatibility x, y)
+  less: -> "<"
+  same: -> "="
+  more: -> ">"
+  incompatible: -> "!"
+
+test "=", -> compat "1.0.0", "1.0.1"
+test "=", -> compat "1.0.0", "1.0.1"
+test "=", -> compat "1.0.2", "1.0.1"
+test "!", -> compat "0.0.0", "1.0.0"
+test ">", -> compat "1.3.0", "1.2.0"
+test "<", -> compat "1.2.0", "1.4.0"
+test "!", -> compat "1.0.0", "2.0.1"
+test "!", -> compat "10.0.0", "15.0.1"
+
+console.log "#{passed} tests successfully passed!"
