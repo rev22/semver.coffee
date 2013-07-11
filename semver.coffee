@@ -1,6 +1,6 @@
 # semver.coffee - Library for Semantic Versioning
 
-# Version: 1.0.2
+# Version: 1.0.3
   
 # Copyright (c) 2013 Michele Bini
 
@@ -30,7 +30,7 @@ extend = (object) -> (fields) ->
 
 object = extend extend
 
-# Basic extensible library with exportable funcions
+# Basic extensible library with exportable functions
 library = object
   exports: object
   extendObject: (fields) ->
