@@ -1,6 +1,6 @@
 # semver.coffee - Library for Semantic Versioning
 
-# Version: 1.0.1
+# Version: 1.0.2
   
 # Copyright (c) 2013 Michele Bini
 
@@ -20,24 +20,28 @@
 
 # Tiny object system
 
-object = (fields) ->
-  o = (fields) -> arguments.callee.extend fields
-  o[n] = v for n,v of this
+extend = (object) -> (fields) ->
+  o = (fields) ->
+    return o.extendObject(fields) if o.extendObject?
+    (extend o) fields
+  o[n] = v for n,v of object
   o[n] = v for n,v of fields
   o
 
-library = (object.extend = object)
-  baseExtend: object
+object = extend extend
+
+# Basic extensible library with exportable funcions
+library = object
   exports: object
-  extend: (fields) ->
-    o = @baseExtend fields
-    o = o.baseExtend (p = o.public)
+  extendObject: (fields) ->
+    o = (extend @) fields
+    o = (extend o) (p = o.public)
     exports = o.exports p
     adapt = (m, l) -> () -> m.apply l, arguments
     exports[n] = adapt o[n], o for n of exports
-    o.baseExtend { exports }
+    (extend o) { exports }
 
-# Subset of the library that only supports normal versions, without
+# Subset of the final library that only supports normal versions, without
 # build or prerelease parts
 
 doc = (doc, f) -> f.doc = doc; f
